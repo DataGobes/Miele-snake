@@ -223,7 +223,121 @@
             margin-top: 10px;
             font-style: italic;
         }
+
+        /* Main Layout — game + leaderboard side by side */
+        .main-layout {
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+        }
+
+        /* Leaderboard Panel */
+        .leaderboard-panel {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            width: 260px;
+            min-height: 400px;
+        }
+
+        .leaderboard-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #333;
+            text-align: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #B92D29;
+        }
+
+        .leaderboard-loading {
+            text-align: center;
+            color: #999;
+            font-size: 0.85rem;
+            padding: 20px 0;
+        }
+
+        .leaderboard-empty {
+            text-align: center;
+            color: #999;
+            font-size: 0.85rem;
+            padding: 20px 0;
+        }
+
+        .leaderboard-entry {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+        }
+
+        .leaderboard-entry:nth-child(odd) {
+            background: #f9f9f9;
+        }
+
+        .leaderboard-entry.highlight {
+            background: #fef2f2;
+            border: 1px solid #B92D29;
+        }
+
+        .leaderboard-rank {
+            font-weight: 700;
+            color: #B92D29;
+            min-width: 22px;
+            text-align: center;
+        }
+
+        .leaderboard-rank.gold { color: #D4A017; }
+        .leaderboard-rank.silver { color: #888; }
+        .leaderboard-rank.bronze { color: #A0522D; }
+
+        .leaderboard-name {
+            flex: 1;
+            font-weight: 600;
+            color: #333;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .leaderboard-score {
+            font-weight: 700;
+            color: #B92D29;
+        }
+
+        .leaderboard-level {
+            font-size: 0.7rem;
+            color: #999;
+            min-width: 30px;
+            text-align: right;
+        }
+
+        .score-submitted {
+            font-size: 0.85rem;
+            color: #28a745;
+            font-weight: 600;
+        }
+
+        /* Responsive: stack on narrow screens */
+        @media (max-width: 900px) {
+            .main-layout {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .leaderboard-panel {
+                width: 100%;
+                max-width: 440px;
+                min-height: auto;
+            }
+        }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <div class="header">
@@ -232,47 +346,62 @@
         <div class="game-title">Premium Snake Experience</div>
     </div>
     
-    <div class="game-container">
-        <div class="score-board">
-            <div class="score-item">
-                <div class="score-label">Score</div>
-                <div class="score-value" id="score">0</div>
+    <div class="main-layout">
+        <div class="game-container">
+            <div class="score-board">
+                <div class="score-item">
+                    <div class="score-label">Score</div>
+                    <div class="score-value" id="score">0</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">High Score</div>
+                    <div class="score-value" id="highScore">0</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">Level</div>
+                    <div class="score-value" id="level">1</div>
+                </div>
             </div>
-            <div class="score-item">
-                <div class="score-label">High Score</div>
-                <div class="score-value" id="highScore">0</div>
+
+            <div class="canvas-wrapper">
+                <canvas id="gameCanvas" width="400" height="400"></canvas>
+                <div class="overlay" id="gameOverOverlay">
+                    <h2>Game Over</h2>
+                    <p>Final Score: <span id="finalScore">0</span></p>
+                    <p class="score-submitted" id="scoreSubmitted"></p>
+                    <button class="btn btn-primary" onclick="startGame()">Play Again</button>
+                </div>
             </div>
-            <div class="score-item">
-                <div class="score-label">Level</div>
-                <div class="score-value" id="level">1</div>
+
+            <div class="controls">
+                Use <span class="controls-key">↑</span> <span class="controls-key">↓</span> <span class="controls-key">←</span> <span class="controls-key">→</span> or <span class="controls-key">W</span> <span class="controls-key">A</span> <span class="controls-key">S</span> <span class="controls-key">D</span> to move
+            </div>
+
+            <div class="btn-container">
+                <button class="btn btn-primary" onclick="startGame()">New Game</button>
+                <button class="btn btn-secondary" onclick="pauseGame()">Pause</button>
+            </div>
+
+            <div class="premium-badge">★ Premium Quality</div>
+            <div class="appliance-hint">Collect Miele pearls • Avoid collisions • Experience excellence</div>
+
+            <div class="accent-bar"></div>
+        </div>
+
+        <div class="leaderboard-panel">
+            <div class="leaderboard-title">🏆 Leaderboard</div>
+            <div class="leaderboard-list" id="leaderboardList">
+                <div class="leaderboard-loading">Loading...</div>
             </div>
         </div>
-        
-        <div class="canvas-wrapper">
-            <canvas id="gameCanvas" width="400" height="400"></canvas>
-            <div class="overlay" id="gameOverOverlay">
-                <h2>Game Over</h2>
-                <p>Final Score: <span id="finalScore">0</span></p>
-                <button class="btn btn-primary" onclick="startGame()">Play Again</button>
-            </div>
-        </div>
-        
-        <div class="controls">
-            Use <span class="controls-key">↑</span> <span class="controls-key">↓</span> <span class="controls-key">←</span> <span class="controls-key">→</span> or <span class="controls-key">W</span> <span class="controls-key">A</span> <span class="controls-key">S</span> <span class="controls-key">D</span> to move
-        </div>
-        
-        <div class="btn-container">
-            <button class="btn btn-primary" onclick="startGame()">New Game</button>
-            <button class="btn btn-secondary" onclick="pauseGame()">Pause</button>
-        </div>
-        
-        <div class="premium-badge">★ Premium Quality</div>
-        <div class="appliance-hint">Collect Miele pearls • Avoid collisions • Experience excellence</div>
-        
-        <div class="accent-bar"></div>
     </div>
 
     <script>
+        // Supabase config — replace with your project values
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const scoreElement = document.getElementById('score');
@@ -533,19 +662,125 @@
             event.target.textContent = isPaused ? 'Resume' : 'Pause';
         }
         
+        // --- Leaderboard functions ---
+
+        let lastSubmittedId = null;
+
+        function createLeaderboardEntry(entry, index) {
+            const row = document.createElement('div');
+            row.className = 'leaderboard-entry' + (entry.id === lastSubmittedId ? ' highlight' : '');
+
+            const rank = document.createElement('span');
+            rank.className = 'leaderboard-rank' + (index === 0 ? ' gold' : index === 1 ? ' silver' : index === 2 ? ' bronze' : '');
+            rank.textContent = index + 1;
+
+            const name = document.createElement('span');
+            name.className = 'leaderboard-name';
+            name.textContent = entry.player_name;
+
+            const scoreSpan = document.createElement('span');
+            scoreSpan.className = 'leaderboard-score';
+            scoreSpan.textContent = entry.score;
+
+            const levelSpan = document.createElement('span');
+            levelSpan.className = 'leaderboard-level';
+            levelSpan.textContent = 'L' + entry.level;
+
+            row.appendChild(rank);
+            row.appendChild(name);
+            row.appendChild(scoreSpan);
+            row.appendChild(levelSpan);
+            return row;
+        }
+
+        async function fetchLeaderboard() {
+            const listEl = document.getElementById('leaderboardList');
+            try {
+                const { data, error } = await supabaseClient
+                    .from('leaderboard')
+                    .select('id, player_name, score, level')
+                    .order('score', { ascending: false })
+                    .limit(10);
+
+                if (error) throw error;
+
+                listEl.textContent = '';
+
+                if (!data || data.length === 0) {
+                    const empty = document.createElement('div');
+                    empty.className = 'leaderboard-empty';
+                    empty.textContent = 'No scores yet \u2014 be the first!';
+                    listEl.appendChild(empty);
+                    return;
+                }
+
+                data.forEach((entry, i) => {
+                    listEl.appendChild(createLeaderboardEntry(entry, i));
+                });
+            } catch (err) {
+                console.error('Leaderboard fetch error:', err);
+                listEl.textContent = '';
+                const errDiv = document.createElement('div');
+                errDiv.className = 'leaderboard-empty';
+                errDiv.textContent = 'Could not load leaderboard';
+                listEl.appendChild(errDiv);
+            }
+        }
+
+        async function submitScore(playerName, playerScore, playerLevel) {
+            const { data, error } = await supabaseClient
+                .from('leaderboard')
+                .insert([{ player_name: playerName, score: playerScore, level: playerLevel }])
+                .select('id')
+                .single();
+
+            if (error) {
+                console.error('Score submit error:', error);
+                return false;
+            }
+
+            lastSubmittedId = data.id;
+            await fetchLeaderboard();
+            return true;
+        }
+
+        async function promptAndSubmitScore() {
+            if (score <= 0) return;
+
+            const savedName = localStorage.getItem('mieleSnakePlayerName') || '';
+            const name = prompt('Enter your name for the leaderboard (1-20 chars):', savedName);
+
+            if (!name || name.trim().length === 0 || name.trim().length > 20) return;
+
+            const trimmedName = name.trim();
+            localStorage.setItem('mieleSnakePlayerName', trimmedName);
+
+            const submitted = await submitScore(trimmedName, score, level);
+            const msgEl = document.getElementById('scoreSubmitted');
+            if (submitted) {
+                msgEl.textContent = 'Score submitted!';
+            } else {
+                msgEl.textContent = 'Could not submit score';
+                msgEl.style.color = '#dc3545';
+            }
+        }
+
         // Game over
         function gameOver() {
             isGameRunning = false;
             clearInterval(gameLoop);
-            
+
             if (score > highScore) {
                 highScore = score;
                 localStorage.setItem('mieleSnakeHighScore', highScore);
                 highScoreElement.textContent = highScore;
             }
-            
+
             finalScoreElement.textContent = score;
+            document.getElementById('scoreSubmitted').textContent = '';
             gameOverOverlay.classList.add('show');
+
+            promptAndSubmitScore();
         }
         
         // Keyboard controls
@@ -616,6 +851,7 @@
         // Initial draw
         initGame();
         draw();
+        fetchLeaderboard();
     </script>
 </body>
 </html>
