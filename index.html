@@ -323,6 +323,32 @@
             font-weight: 600;
         }
 
+        .score-submit-section {
+            display: none;
+            margin-bottom: 14px;
+        }
+
+        .score-submit-row {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .score-name-input {
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 8px 12px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            width: 180px;
+            outline: none;
+        }
+
+        .score-name-input:focus {
+            border-color: #B92D29;
+        }
+
         /* Responsive: stack on narrow screens */
         @media (max-width: 900px) {
             .main-layout {
@@ -368,6 +394,12 @@
                 <div class="overlay" id="gameOverOverlay">
                     <h2>Game Over</h2>
                     <p>Final Score: <span id="finalScore">0</span></p>
+                    <div class="score-submit-section" id="scoreSubmitSection">
+                        <div class="score-submit-row">
+                            <input id="playerNameInput" class="score-name-input" type="text" maxlength="20" placeholder="Your name" aria-label="Player name" />
+                            <button id="submitScoreBtn" class="btn btn-secondary" onclick="handleScoreSubmit()">Submit</button>
+                        </div>
+                    </div>
                     <p class="score-submitted" id="scoreSubmitted"></p>
                     <button class="btn btn-primary" onclick="startGame()">Play Again</button>
                 </div>
@@ -409,6 +441,10 @@
         const levelElement = document.getElementById('level');
         const gameOverOverlay = document.getElementById('gameOverOverlay');
         const finalScoreElement = document.getElementById('finalScore');
+        const scoreSubmittedElement = document.getElementById('scoreSubmitted');
+        const scoreSubmitSection = document.getElementById('scoreSubmitSection');
+        const playerNameInput = document.getElementById('playerNameInput');
+        const submitScoreBtn = document.getElementById('submitScoreBtn');
         
         // Game variables
         const gridSize = 20;
@@ -425,6 +461,7 @@
         let gameSpeed = 150;
         let isGameRunning = false;
         let isPaused = false;
+        let hasSubmittedCurrentGame = false;
         
         // Colors - Miele Theme
         const colors = {
@@ -647,6 +684,13 @@
             gameOverOverlay.classList.remove('show');
             isGameRunning = true;
             isPaused = false;
+            hasSubmittedCurrentGame = false;
+            scoreSubmittedElement.textContent = '';
+            scoreSubmittedElement.style.color = '#28a745';
+            scoreSubmitSection.style.display = 'none';
+            playerNameInput.value = '';
+            submitScoreBtn.disabled = false;
+            submitScoreBtn.textContent = 'Submit';
             
             if (gameLoop) clearInterval(gameLoop);
             
@@ -744,24 +788,46 @@
             return true;
         }
 
-        async function promptAndSubmitScore() {
-            if (score <= 0) return;
+        function prepareScoreSubmission() {
+            if (score <= 0) {
+                scoreSubmitSection.style.display = 'none';
+                return;
+            }
 
+            scoreSubmitSection.style.display = 'block';
             const savedName = localStorage.getItem('mieleSnakePlayerName') || '';
-            const name = prompt('Enter your name for the leaderboard (1-20 chars):', savedName);
+            playerNameInput.value = savedName;
+            setTimeout(() => playerNameInput.focus(), 0);
+        }
 
-            if (!name || name.trim().length === 0 || name.trim().length > 20) return;
+        async function handleScoreSubmit() {
+            if (score <= 0 || hasSubmittedCurrentGame) return;
+
+            const name = playerNameInput.value;
+
+            if (!name || name.trim().length === 0 || name.trim().length > 20) {
+                scoreSubmittedElement.textContent = 'Enter a name (1-20 chars)';
+                scoreSubmittedElement.style.color = '#dc3545';
+                return;
+            }
 
             const trimmedName = name.trim();
             localStorage.setItem('mieleSnakePlayerName', trimmedName);
 
+            submitScoreBtn.disabled = true;
+            submitScoreBtn.textContent = 'Submitting...';
+
             const submitted = await submitScore(trimmedName, score, level);
-            const msgEl = document.getElementById('scoreSubmitted');
             if (submitted) {
-                msgEl.textContent = 'Score submitted!';
+                hasSubmittedCurrentGame = true;
+                scoreSubmittedElement.textContent = 'Score submitted!';
+                scoreSubmittedElement.style.color = '#28a745';
+                scoreSubmitSection.style.display = 'none';
             } else {
-                msgEl.textContent = 'Could not submit score';
-                msgEl.style.color = '#dc3545';
+                scoreSubmittedElement.textContent = 'Could not submit score';
+                scoreSubmittedElement.style.color = '#dc3545';
+                submitScoreBtn.disabled = false;
+                submitScoreBtn.textContent = 'Submit';
             }
         }
 
@@ -777,11 +843,18 @@
             }
 
             finalScoreElement.textContent = score;
-            document.getElementById('scoreSubmitted').textContent = '';
+            scoreSubmittedElement.textContent = '';
+            scoreSubmittedElement.style.color = '#28a745';
             gameOverOverlay.classList.add('show');
-
-            promptAndSubmitScore();
+            prepareScoreSubmission();
         }
+
+        playerNameInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleScoreSubmit();
+            }
+        });
         
         // Keyboard controls
         document.addEventListener('keydown', (e) => {
