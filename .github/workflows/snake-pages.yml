@@ -10,7 +10,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'miele_snake.html'
+      - 'index.html'
       - '.github/workflows/snake-pages.yml'
   workflow_dispatch:
 
@@ -43,7 +43,7 @@ jobs:
       - name: Prepare Pages artifact
         run: |
           mkdir _site
-          cp miele_snake.html _site/index.html
+          cp index.html _site/index.html
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
