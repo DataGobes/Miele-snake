@@ -10,10 +10,10 @@ on:
     inputs:
       supabase_url:
         description: 'Supabase URL'
-        required: true
+        required: false
       supabase_key:
         description: 'Supabase Anon Key'
-        required: true
+        required: false
 
 permissions:
   contents: read
@@ -35,16 +35,16 @@ jobs:
 
       - name: Inject Supabase config
         env:
-          SUPABASE_URL: ${{ github.event.inputs.supabase_url || secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ github.event.inputs.supabase_key || secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_URL: ${{ github.event.inputs.supabase_url }}
+          SUPABASE_ANON_KEY: ${{ github.event.inputs.supabase_key }}
         run: |
-          if [ -z "$SUPABASE_URL" ]; then
-            echo "Using demo mode - no Supabase config"
-            exit 0
+          if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_ANON_KEY" ]; then
+            sed -i "s|__SUPABASE_URL__|${SUPABASE_URL}|g" index.html
+            sed -i "s|__SUPABASE_ANON_KEY__|${SUPABASE_ANON_KEY}|g" index.html
+            echo "Injected Supabase config"
+          else
+            echo "No Supabase config provided - leaderboard will need manual setup"
           fi
-          
-          sed -i "s|__SUPABASE_URL__|${SUPABASE_URL}|g" index.html
-          sed -i "s|__SUPABASE_ANON_KEY__|${SUPABASE_ANON_KEY}|g" index.html
 
       - name: Prepare Pages artifact
         run: |

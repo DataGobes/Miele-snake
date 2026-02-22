@@ -441,7 +441,7 @@
                 return 'Supabase SDK failed to load (CDN blocked/offline)';
             }
 
-            if (!url || !url.startsWith('https://') || !url.includes('.supabase')) {
+            if (!url) {
                 return 'Missing Supabase URL (placeholder not replaced; check SUPABASE_URL secret)';
             }
 
@@ -454,7 +454,7 @@
                 return 'Supabase URL is invalid';
             }
 
-            if (!anonKey || !anonKey.startsWith('eyJ') || anonKey.length < 20) {
+            if (!anonKey) {
                 return 'Missing Supabase anon key (placeholder not replaced; check SUPABASE_ANON_KEY secret)';
             }
 
