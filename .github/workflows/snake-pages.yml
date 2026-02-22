@@ -23,18 +23,19 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    env:
-      SUPABASE_URL: ${{ vars.SUPABASE_URL }}
-      SUPABASE_KEY: ${{ vars.SUPABASE_KEY }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Inject Supabase config
         run: |
-          echo "URL: $SUPABASE_URL"
+          # Environment variables from the github-pages environment
+          echo "URL is: $SUPABASE_URL"
+          echo "KEY is: $SUPABASE_KEY"
           if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_KEY" ]; then
             sed -i "s|__SUPABASE_URL__|${SUPABASE_URL}|g" index.html
             sed -i "s|__SUPABASE_KEY__|${SUPABASE_KEY}|g" index.html
+          else
+            echo "Missing env vars"
           fi
 
       - name: Prepare Pages artifact
