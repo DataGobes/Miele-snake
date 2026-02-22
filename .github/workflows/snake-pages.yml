@@ -28,14 +28,13 @@ jobs:
 
       - name: Inject Supabase config
         run: |
-          # Environment variables from the github-pages environment
-          echo "URL is: $SUPABASE_URL"
-          echo "KEY is: $SUPABASE_KEY"
-          if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_KEY" ]; then
-            sed -i "s|__SUPABASE_URL__|${SUPABASE_URL}|g" index.html
-            sed -i "s|__SUPABASE_KEY__|${SUPABASE_KEY}|g" index.html
-          else
-            echo "Missing env vars"
+          # Access environment variables explicitly
+          URL="${{ vars.SUPABASE_URL }}"
+          KEY="${{ vars.SUPABASE_KEY }}"
+          echo "URL: $URL"
+          if [ -n "$URL" ] && [ -n "$KEY" ]; then
+            sed -i "s|__SUPABASE_URL__|${URL}|g" index.html
+            sed -i "s|__SUPABASE_KEY__|${KEY}|g" index.html
           fi
 
       - name: Prepare Pages artifact
