@@ -431,8 +431,8 @@
     <script>
         // Supabase config
         // Priority: window globals -> localStorage -> placeholders
-        const SUPABASE_URL_PLACEHOLDER = ['YOUR', 'SUPABASE_URL'].join('_');
-        const SUPABASE_ANON_KEY_PLACEHOLDER = ['YOUR', 'SUPABASE_ANON_KEY'].join('_');
+        const SUPABASE_URL_PLACEHOLDER = '__SUPABASE_URL__';
+        const SUPABASE_ANON_KEY_PLACEHOLDER = '__SUPABASE_ANON_KEY__';
         const SUPABASE_URL = window.SUPABASE_URL || localStorage.getItem('mieleSnakeSupabaseUrl') || SUPABASE_URL_PLACEHOLDER;
         const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || localStorage.getItem('mieleSnakeSupabaseAnonKey') || SUPABASE_ANON_KEY_PLACEHOLDER;
 
@@ -441,7 +441,7 @@
                 return 'Supabase SDK failed to load (CDN blocked/offline)';
             }
 
-            if (!url || url.includes(SUPABASE_URL_PLACEHOLDER)) {
+            if (!url || !url.startsWith('https://') || !url.includes('.supabase')) {
                 return 'Missing Supabase URL (placeholder not replaced; check SUPABASE_URL secret)';
             }
 
@@ -454,7 +454,7 @@
                 return 'Supabase URL is invalid';
             }
 
-            if (!anonKey || anonKey.includes(SUPABASE_ANON_KEY_PLACEHOLDER)) {
+            if (!anonKey || !anonKey.startsWith('eyJ') || anonKey.length < 20) {
                 return 'Missing Supabase anon key (placeholder not replaced; check SUPABASE_ANON_KEY secret)';
             }
 
